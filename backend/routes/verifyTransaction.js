@@ -1,10 +1,10 @@
 import express from 'express';
-import axios from 'axios';
+import https from 'https';
 import PaytmChecksum from 'paytmchecksum';
 
 const router = express.Router();
 
-// Verify Transaction Status
+// Verify Transaction Status using new Paytm Order Status API
 router.post('/verify-transaction', async (req, res) => {
   try {
     const { orderId } = req.body;
@@ -26,40 +26,82 @@ router.post('/verify-transaction', async (req, res) => {
       });
     }
 
-    // Prepare verification parameters
-    const verifyParams = {
-      MID: MID,
-      ORDERID: orderId
+    // Prepare body for Order Status API
+    const paytmBody = {
+      mid: MID,
+      orderId: orderId,
     };
 
     // Generate checksum for verification
     const checksum = await PaytmChecksum.generateSignature(
-      JSON.stringify(verifyParams),
+      JSON.stringify(paytmBody),
       MERCHANT_KEY
     );
 
-    verifyParams.CHECKSUMHASH = checksum;
+    const paytmParams = {
+      body: paytmBody,
+      head: {
+        signature: checksum,
+      },
+    };
 
-    // Call Paytm API to verify transaction
-    const verificationUrl = process.env.PAYTM_VERIFY_URL ||
-      'https://securegw.paytm.in/merchant-status/getTxnStatus';
+    const postData = JSON.stringify(paytmParams);
+
+    // Determine hostname based on environment
+    const isProduction = process.env.PAYTM_ENVIRONMENT !== 'staging';
+    const hostname = isProduction
+      ? 'secure.paytmpayments.com'
+      : 'securestage.paytmpayments.com';
+
+    const path = `/v2/order/status`;
 
     console.log('Verifying transaction for order:', orderId);
 
-    const response = await axios.post(verificationUrl, verifyParams, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
+    const paytmResponse = await new Promise((resolve, reject) => {
+      const options = {
+        hostname: hostname,
+        port: 443,
+        path: path,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(postData),
+        },
+      };
+
+      let responseData = '';
+      const postReq = https.request(options, (postRes) => {
+        postRes.on('data', (chunk) => {
+          responseData += chunk;
+        });
+        postRes.on('end', () => {
+          try {
+            resolve(JSON.parse(responseData));
+          } catch (e) {
+            reject(new Error(`Invalid JSON response: ${responseData}`));
+          }
+        });
+      });
+
+      postReq.on('error', (error) => {
+        reject(error);
+      });
+
+      postReq.write(postData);
+      postReq.end();
     });
 
-    const txnStatus = response.data;
+    console.log('Verification response:', JSON.stringify(paytmResponse));
+
+    const resultInfo = paytmResponse.body?.resultInfo;
+    const txnStatus = resultInfo?.resultStatus;
 
     // Return transaction status
     res.json({
-      success: txnStatus.STATUS === 'TXN_SUCCESS' || txnStatus.STATUS === 'COMPLETE',
-      status: txnStatus.STATUS,
-      data: txnStatus,
-      message: txnStatus.RESPMSG || 'Transaction verification completed'
+      success: txnStatus === 'TXN_SUCCESS',
+      status: txnStatus || 'UNKNOWN',
+      data: paytmResponse.body || {},
+      message: resultInfo?.resultMsg || 'Transaction verification completed'
     });
 
   } catch (error) {

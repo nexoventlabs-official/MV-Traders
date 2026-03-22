@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Minus, X } from 'lucide-react';
-import { initiatePaytmPayment, submitPaytmForm } from '@/lib/paytm';
+import { initiatePaytmPayment, openPaytmCheckout } from '@/lib/paytm';
 
 const CheckoutPage = () => {
   const { items, total, clearCart, updateQuantity, removeItem } = useCart();
@@ -72,8 +72,8 @@ const CheckoutPage = () => {
       // Store order data in localStorage for later retrieval
       localStorage.setItem(`order_${orderId}`, JSON.stringify(orderData));
       
-      // Initiate Paytm payment
-      const paytmParams = await initiatePaytmPayment({
+      // Initiate Paytm payment - get txnToken from backend
+      const paymentData = await initiatePaytmPayment({
         orderId: orderId,
         amount: orderTotal.toFixed(2),
         customerId: formData.phone,
@@ -82,23 +82,42 @@ const CheckoutPage = () => {
       });
       
       toast({
-        title: "Redirecting to payment gateway...",
+        title: "Opening payment gateway...",
         description: "Please complete your payment on Paytm",
       });
       
-      // Clear cart before redirecting
-      clearCart();
-      
-      // Submit payment form
-      setTimeout(() => {
-        submitPaytmForm(paytmParams);
-      }, 1000);
+      // Open Paytm JS Checkout with txnToken
+      await openPaytmCheckout(
+        paymentData,
+        // On Success
+        (paymentStatus) => {
+          console.log('Payment successful:', paymentStatus);
+          clearCart();
+          toast({
+            title: "Payment Successful!",
+            description: `Transaction ID: ${paymentStatus.TXNID || 'N/A'}`,
+          });
+          navigate(`/payment-callback?ORDERID=${orderId}&STATUS=TXN_SUCCESS&TXNID=${paymentStatus.TXNID || ''}&TXNAMOUNT=${paymentStatus.TXNAMOUNT || orderTotal.toFixed(2)}&RESPMSG=${encodeURIComponent(paymentStatus.RESPMSG || 'Payment successful')}`);
+          setIsProcessing(false);
+        },
+        // On Failure
+        (errorMsg) => {
+          console.error('Payment failed:', errorMsg);
+          toast({
+            title: "Payment Failed",
+            description: errorMsg || "Payment was not completed. Please try again.",
+            variant: "destructive",
+          });
+          navigate(`/payment-callback?ORDERID=${orderId}&STATUS=TXN_FAILURE&RESPMSG=${encodeURIComponent(errorMsg || 'Payment failed')}`);
+          setIsProcessing(false);
+        }
+      );
       
     } catch (error) {
       console.error('Payment initiation error:', error);
       toast({
         title: "Payment Error",
-        description: "Failed to initiate payment. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to initiate payment. Please try again.",
         variant: "destructive",
       });
       setIsProcessing(false);

@@ -3,12 +3,16 @@ import PaytmChecksum from 'paytmchecksum';
 
 const router = express.Router();
 
-// Paytm Callback Handler - POST
+// Frontend URL for redirect after payment
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://mv-traders-iota.vercel.app';
+
+// Paytm Callback Handler - POST (Paytm sends form-urlencoded data here)
 router.post('/payment-callback', async (req, res) => {
   try {
     console.log('📥 Received Paytm callback');
+    console.log('Callback body:', JSON.stringify(req.body));
 
-    const paytmParams = req.body;
+    const paytmParams = { ...req.body };
     const receivedChecksum = paytmParams.CHECKSUMHASH;
 
     // Remove checksum from params for verification
@@ -17,108 +21,65 @@ router.post('/payment-callback', async (req, res) => {
     const MERCHANT_KEY = process.env.PAYTM_MERCHANT_KEY;
 
     if (!MERCHANT_KEY) {
-      return res.status(500).json({
-        success: false,
-        message: 'Merchant key not configured'
-      });
+      console.error('❌ Merchant key not configured');
+      return res.redirect(`${FRONTEND_URL}/payment-callback?STATUS=TXN_FAILURE&RESPMSG=${encodeURIComponent('Server configuration error')}`);
     }
 
     // Verify checksum
     const isValidChecksum = PaytmChecksum.verifySignature(
-      JSON.stringify(paytmParams),
+      paytmParams,
       MERCHANT_KEY,
       receivedChecksum
     );
 
-    if (!isValidChecksum) {
-      console.error('❌ Invalid checksum received');
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid payment signature. Payment verification failed.',
-        verified: false
-      });
-    }
+    console.log('Checksum valid:', isValidChecksum);
 
-    console.log('✅ Checksum verified successfully');
-
-    // Check payment status
-    const status = paytmParams.STATUS;
-    const orderId = paytmParams.ORDERID;
-    const transactionId = paytmParams.TXNID;
-    const bankName = paytmParams.BANKNAME || 'N/A';
-    const paymentMode = paytmParams.PAYMENTMODE || 'N/A';
-    const amount = paytmParams.TXNAMOUNT;
+    // Extract payment details
+    const status = paytmParams.STATUS || 'TXN_FAILURE';
+    const orderId = paytmParams.ORDERID || '';
+    const transactionId = paytmParams.TXNID || '';
+    const amount = paytmParams.TXNAMOUNT || '';
+    const respMsg = paytmParams.RESPMSG || '';
 
     console.log('Payment Status:', status);
     console.log('Order ID:', orderId);
     console.log('Transaction ID:', transactionId);
 
-    // Prepare response data
-    const paymentResponse = {
-      success: status === 'TXN_SUCCESS',
-      orderId,
-      transactionId,
-      status,
-      amount,
-      bankName,
-      paymentMode,
-      timestamp: new Date().toISOString(),
-      message: status === 'TXN_SUCCESS'
-        ? 'Payment successful'
-        : 'Payment failed or pending'
-    };
-
     if (status === 'TXN_SUCCESS') {
       console.log('✅ Payment successful for order:', orderId);
-      // TODO: Update order status in database
-      // TODO: Send confirmation email
-      // TODO: Update inventory
     } else {
       console.log('❌ Payment failed for order:', orderId);
-      // TODO: Log failed payment
     }
 
-    // Return success response
-    res.json(paymentResponse);
+    // Redirect user to frontend payment callback page with status
+    const redirectUrl = `${FRONTEND_URL}/payment-callback?ORDERID=${encodeURIComponent(orderId)}&STATUS=${encodeURIComponent(status)}&TXNID=${encodeURIComponent(transactionId)}&TXNAMOUNT=${encodeURIComponent(amount)}&RESPMSG=${encodeURIComponent(respMsg)}`;
+
+    console.log('Redirecting to:', redirectUrl);
+    res.redirect(redirectUrl);
 
   } catch (error) {
     console.error('Callback processing error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error processing payment callback',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    res.redirect(`${FRONTEND_URL}/payment-callback?STATUS=TXN_FAILURE&RESPMSG=${encodeURIComponent('Error processing payment')}`);
   }
 });
 
-// GET endpoint for callback (some payment gateways use GET)
+// GET endpoint for callback (fallback)
 router.get('/payment-callback', async (req, res) => {
   try {
     console.log('📥 Received Paytm callback (GET)');
-    // Convert query params to body format for reuse
-    req.body = req.query;
-    // Reuse POST handler logic
-    const middleware = router._router.stack.find(
-      layer => layer.route && layer.route.path === '/payment-callback' && layer.route.methods.post
-    );
-    if (middleware) {
-      // For GET requests, create a basic response
-      const paytmParams = req.query;
-      const orderId = paytmParams.ORDERID;
+    const paytmParams = req.query;
+    const orderId = paytmParams.ORDERID || '';
+    const status = paytmParams.STATUS || 'TXN_FAILURE';
+    const transactionId = paytmParams.TXNID || '';
+    const amount = paytmParams.TXNAMOUNT || '';
+    const respMsg = paytmParams.RESPMSG || '';
 
-      res.json({
-        success: paytmParams.STATUS === 'TXN_SUCCESS',
-        orderId,
-        status: paytmParams.STATUS,
-        message: 'Please check your email for order confirmation'
-      });
-    }
+    const redirectUrl = `${FRONTEND_URL}/payment-callback?ORDERID=${encodeURIComponent(orderId)}&STATUS=${encodeURIComponent(status)}&TXNID=${encodeURIComponent(transactionId)}&TXNAMOUNT=${encodeURIComponent(amount)}&RESPMSG=${encodeURIComponent(respMsg)}`;
+
+    res.redirect(redirectUrl);
   } catch (error) {
     console.error('GET Callback error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error processing payment callback'
-    });
+    res.redirect(`${FRONTEND_URL}/payment-callback?STATUS=TXN_FAILURE&RESPMSG=${encodeURIComponent('Error processing payment')}`);
   }
 });
 

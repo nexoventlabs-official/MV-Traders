@@ -11,30 +11,51 @@ const PaymentCallback = () => {
   const [paymentDetails, setPaymentDetails] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    // Get payment response from URL params
-    const orderId = searchParams.get('ORDERID') || '';
-    const txnId = searchParams.get('TXNID') || '';
-    const txnAmount = searchParams.get('TXNAMOUNT') || '';
-    const status = searchParams.get('STATUS') || '';
-    const respCode = searchParams.get('RESPCODE') || '';
-    const respMsg = searchParams.get('RESPMSG') || '';
+    const verifyPayment = async () => {
+      // Get payment response from URL params
+      const orderId = searchParams.get('ORDERID') || '';
+      const txnId = searchParams.get('TXNID') || '';
+      const txnAmount = searchParams.get('TXNAMOUNT') || '';
+      const urlStatus = searchParams.get('STATUS') || '';
+      const respCode = searchParams.get('RESPCODE') || '';
+      const respMsg = searchParams.get('RESPMSG') || '';
 
-    setPaymentDetails({
-      orderId,
-      txnId,
-      txnAmount,
-      status,
-      respCode,
-      respMsg,
-    });
+      setPaymentDetails({
+        orderId,
+        txnId,
+        txnAmount,
+        status: urlStatus,
+        respCode,
+        respMsg,
+      });
 
-    // Verify payment status
-    if (status === 'TXN_SUCCESS') {
-      setStatus('success');
-      // In production, verify this with your backend
-    } else {
-      setStatus('failed');
-    }
+      // Verify payment status with backend if we have an orderId
+      if (orderId) {
+        try {
+          const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://mv-traders-0007.onrender.com';
+          const response = await fetch(`${BACKEND_URL}/api/verify-transaction`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId }),
+          });
+          const data = await response.json();
+          if (data.success) {
+            setStatus('success');
+          } else {
+            // Fall back to URL param status
+            setStatus(urlStatus === 'TXN_SUCCESS' ? 'success' : 'failed');
+          }
+        } catch (error) {
+          console.error('Verification error:', error);
+          // Fall back to URL param status
+          setStatus(urlStatus === 'TXN_SUCCESS' ? 'success' : 'failed');
+        }
+      } else {
+        setStatus(urlStatus === 'TXN_SUCCESS' ? 'success' : 'failed');
+      }
+    };
+
+    verifyPayment();
   }, [searchParams]);
 
   if (status === 'processing') {
