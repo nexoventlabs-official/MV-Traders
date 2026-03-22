@@ -7,8 +7,9 @@
     <meta name="description" content="Authentic pure chekku oils and traditional homemade pickles. Straight from our family to yours." />
     <meta name="author" content="M V Traders" />
     <meta name="mobile-web-app-capable" content="yes">
-    <!-- CSP for Paytm & External Resources -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.paytm.in https://*.paytm.com https://*.paytmpayments.com https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://*.paytm.in https://*.paytm.com https://*.paytmpayments.com https://fonts.googleapis.com https://fonts.gstatic.com https://cdn.jsdelivr.net; font-src https://fonts.gstatic.com https://fonts.googleapis.com; connect-src 'self' https:; img-src 'self' https: data:; frame-src https://*.paytm.in https://*.paytm.com https://*.paytmpayments.com;">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- Allow all HTTPS resources - Paytm injects its own CSP -->
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Arvo:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
