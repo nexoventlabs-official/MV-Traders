@@ -1,0 +1,181 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* M V Traders Design System - Traditional meets Modern */
+
+@layer base {
+  :root {
+    font-family: 'Geist', sans-serif;
+    
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'Arvo', serif;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    /* Core Brand Colors */
+    --background: 46 31% 97%; /* Off-White #FAF9F6 */
+    --foreground: 0 0% 12%; /* Charcoal #1E1E1E */
+
+    --card: 46 31% 97%;
+    --card-foreground: 0 0% 12%;
+
+    --popover: 46 31% 97%;
+    --popover-foreground: 0 0% 12%;
+
+    /* Primary - Gold for oils, trust, CTAs */
+    --primary: 45 76% 53%; /* Gold #E0A82E */
+    --primary-foreground: 46 31% 97%;
+    --primary-glow: 45 85% 65%;
+
+    /* Secondary - Red for pickles, urgency */
+    --secondary: 1 64% 48%; /* Red #C0392B */
+    --secondary-foreground: 46 31% 97%;
+    --secondary-glow: 1 74% 58%;
+
+    /* Accent - Beige for rustic sections */
+    --accent: 46 50% 80%; /* Beige #F3E5AB */
+    --accent-foreground: 0 0% 12%;
+
+    --muted: 46 35% 92%;
+    --muted-foreground: 0 0% 45%;
+
+    --destructive: 1 64% 48%;
+    --destructive-foreground: 46 31% 97%;
+
+    --border: 46 25% 88%;
+    --input: 46 25% 90%;
+    --ring: 45 76% 53%;
+
+    --radius: 0.5rem;
+
+    /* Custom Design Tokens */
+    --spacing-unit: 8px;
+    
+    /* Gradients */
+    --gradient-gold: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    --gradient-red: linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--secondary-glow)));
+    --gradient-rustic: linear-gradient(180deg, hsl(var(--accent)), hsl(var(--background)));
+    
+    /* Shadows */
+    --shadow-soft: 0 4px 16px hsl(var(--primary) / 0.1);
+    --shadow-gold: 0 8px 32px hsl(var(--primary) / 0.2);
+    --shadow-red: 0 8px 32px hsl(var(--secondary) / 0.2);
+    
+    /* Typography */
+    --font-heading: 'DM Serif Display', serif;
+    --font-body: 'Inter', sans-serif;
+    
+    /* Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bouncy: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    /* Dark mode maintains warm, rustic feel */
+    --background: 0 0% 12%;
+    --foreground: 46 31% 97%;
+    --card: 0 0% 15%;
+    --card-foreground: 46 31% 97%;
+    --popover: 0 0% 15%;
+    --popover-foreground: 46 31% 97%;
+    --primary: 45 76% 53%;
+    --primary-foreground: 0 0% 12%;
+    --secondary: 1 64% 48%;
+    --secondary-foreground: 46 31% 97%;
+    --accent: 46 25% 25%;
+    --accent-foreground: 46 31% 97%;
+    --muted: 0 0% 20%;
+    --muted-foreground: 0 0% 65%;
+    --border: 0 0% 25%;
+    --input: 0 0% 20%;
+    --ring: 45 76% 53%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+  }
+}
+
+@layer components {
+  /* Heritage Button Styles */
+  .btn-gold {
+    @apply bg-gradient-to-r from-primary to-primary-glow text-primary-foreground shadow-gold hover:shadow-lg transition-all duration-300 hover:scale-105;
+  }
+  
+  .btn-red {
+    @apply bg-gradient-to-r from-secondary to-secondary-glow text-secondary-foreground shadow-red hover:shadow-lg transition-all duration-300 hover:scale-105;
+  }
+
+  .btn-rustic {
+    @apply bg-accent text-accent-foreground border-2 border-accent-foreground/20 hover:bg-accent-foreground hover:text-accent transition-all duration-300;
+  }
+
+  /* Product Cards */
+  .product-card {
+    @apply bg-card border border-border rounded-lg shadow-soft hover:shadow-gold transition-all duration-300 hover:-translate-y-1 overflow-hidden;
+  }
+
+  /* Section Backgrounds */
+  .section-gold {
+    @apply bg-gradient-to-br from-primary/5 to-primary-glow/10;
+  }
+
+  .section-red {
+    @apply bg-gradient-to-br from-secondary/5 to-secondary-glow/10;
+  }
+
+  .section-rustic {
+    @apply bg-gradient-to-b from-accent/30 to-background;
+  }
+
+  /* Heritage Text Styles */
+  .text-heritage {
+    @apply font-heading text-foreground;
+  }
+
+  .text-body {
+    @apply font-body text-muted-foreground leading-relaxed;
+  }
+
+  /* Hover Effects */
+  .hover-lift {
+    @apply transition-transform duration-300 hover:-translate-y-1 hover:shadow-lg;
+  }
+
+  .hover-glow-gold {
+    @apply transition-all duration-300 hover:shadow-gold;
+  }
+
+  .hover-glow-red {
+    @apply transition-all duration-300 hover:shadow-red;
+  }
+}
