@@ -1,0 +1,232 @@
+============================================================================
+        MV TRADERS - URL CONFIGURATION SUMMARY
+============================================================================
+
+Last Updated: 2026-03-22
+Status: Production URLs Configured ✅
+
+============================================================================
+CURRENT PRODUCTION URLs
+============================================================================
+
+Frontend (Vercel):      https://mv-traders-iota.vercel.app
+Backend (Render):       https://mv-traders-0007.onrender.com
+Future Domain:          https://www.mvtraders.shop
+
+============================================================================
+BACKEND CONFIGURATION - backend/.env
+============================================================================
+
+FRONTEND_URL=https://mv-traders-iota.vercel.app
+  → Used for CORS validation
+  → Allows frontend requests from Vercel
+
+PAYTM_CALLBACK_URL=https://mv-traders-0007.onrender.com/api/payment-callback
+  → Where Paytm redirects after payment
+  → Must match Paytm callback settings
+
+============================================================================
+CORS CONFIGURATION - backend/server.js
+============================================================================
+
+Allowed Origins (allowedOrigins array):
+  ✅ Development:
+     - http://localhost:5173
+     - http://localhost:8080
+     - http://127.0.0.1:5173
+     - http://127.0.0.1:8080
+
+  ✅ Production:
+     - https://mv-traders-iota.vercel.app
+     - https://www.mvtraders.shop
+     - https://mvtraders.shop (alias)
+
+  ✅ Environment Variable:
+     - FRONTEND_URL (from .env)
+
+============================================================================
+FRONTEND CONFIGURATION - src/lib/paytm.ts
+============================================================================
+
+BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://mv-traders-0007.onrender.com'
+
+Environment Variable Priority:
+  1. VITE_BACKEND_URL (if set in .env or Vercel)
+  2. Fallback: https://mv-traders-0007.onrender.com
+
+Used for API Calls:
+  - POST /api/initiate-payment
+  - POST /api/verify-transaction
+
+============================================================================
+PAYMENT CALLBACK - backend/routes/initiatePayment.js
+============================================================================
+
+CALLBACK_URL = process.env.PAYTM_CALLBACK_URL || 'https://mv-traders-0007.onrender.com/api/payment-callback'
+
+Callback Flow:
+  1. Frontend initiates payment → calls /api/initiate-payment
+  2. Backend generates Paytm params with CALLBACK_URL
+  3. Frontend submits to Paytm gateway
+  4. Paytm redirects to CALLBACK_URL after payment
+  5. Backend verifies transaction
+
+============================================================================
+ENVIRONMENT VARIABLES FOR RENDER
+============================================================================
+
+For Render backend deployment, add these to Environment Variables:
+
+# Frontend CORS
+FRONTEND_URL=https://mv-traders-iota.vercel.app
+
+# Paytm Credentials
+PAYTM_MID=ZkCPzp89071287715186
+PAYTM_MERCHANT_KEY=zoovHN@%Y%swC3iX
+PAYTM_WEBSITE=DEFAULT
+PAYTM_INDUSTRY_TYPE=Retail
+PAYTM_CHANNEL_ID=WEB
+
+# Paytm URLs (Production)
+PAYTM_PAYMENT_URL=https://securegw.paytm.in/order/process
+PAYTM_VERIFY_URL=https://securegw.paytm.in/merchant-status/getTxnStatus
+
+# Callback URL
+PAYTM_CALLBACK_URL=https://mv-traders-0007.onrender.com/api/payment-callback
+
+# Backend Config
+NODE_ENV=production
+PORT=10000
+
+============================================================================
+ENVIRONMENT VARIABLES FOR VERCEL
+============================================================================
+
+For Vercel frontend deployment, add this to Environment Variables:
+
+VITE_BACKEND_URL=https://mv-traders-0007.onrender.com
+
+Note: Frontend DNS credentials are NOT needed anymore (all on backend)
+
+============================================================================
+TESTING ENDPOINTS
+============================================================================
+
+Backend Health Check:
+  curl https://mv-traders-0007.onrender.com/health
+  → Expected: {"status":"Backend is running",...}
+
+Payment Initiation (Local Testing):
+  curl -X POST http://localhost:10000/api/initiate-payment \
+    -H "Content-Type: application/json" \
+    -d '{
+      "orderId": "TEST001",
+      "amount": "1.00",
+      "customerId": "test",
+      "customerEmail": "test@example.com",
+      "customerPhone": "9876543210"
+    }'
+
+Frontend URL Check:
+  Open https://mv-traders-iota.vercel.app in browser
+  Should make requests to https://mv-traders-0007.onrender.com
+
+============================================================================
+FUTURE DOMAIN SETUP (https://www.mvtraders.shop)
+============================================================================
+
+When custom domain is ready:
+
+1. Backend CORS Update:
+   Already added 'https://www.mvtraders.shop' to allowedOrigins ✅
+   Already added 'https://mvtraders.shop' alias ✅
+
+2. Environment Variables:
+   Set FRONTEND_URL=https://www.mvtraders.shop when needed
+
+3. Vercel Custom Domain:
+   Point www.mvtraders.shop to Vercel (via DNS)
+
+4. API Calls:
+   No code change needed - handled via environment variables
+
+============================================================================
+CORS FLOW DIAGRAM
+============================================================================
+
+Browser Request Flow:
+  Frontend (https://mv-traders-iota.vercel.app)
+         ↓
+         | CORS Check
+         ↓
+  Backend (https://mv-traders-0007.onrender.com)
+
+  Allowed Origins:
+  ✅ https://mv-traders-iota.vercel.app (Vercel)
+  ✅ https://www.mvtraders.shop (Future)
+  ✅ http://localhost:* (Development)
+  ✅ process.env.FRONTEND_URL
+
+  Blocked Origins:
+  ❌ Any other origin
+  ❌ Invalid requests
+
+============================================================================
+PAYMENT FLOW
+============================================================================
+
+1. User clicks "Pay" on frontend
+2. Frontend calls: POST /api/initiate-payment
+3. Backend generates checksum with:
+   - Order details
+   - CALLBACK_URL = https://mv-traders-0007.onrender.com/api/payment-callback
+4. Returns params to frontend
+5. Frontend submits form to Paytm
+6. Paytm processes payment
+7. Paytm redirects to CALLBACK_URL
+8. Backend verifies & updates transaction status
+
+============================================================================
+FILES MODIFIED
+============================================================================
+
+✅ backend/server.js
+   - CORS allowedOrigins array updated
+   - Includes: Vercel URL, future domain, localhost
+
+✅ backend/.env
+   - FRONTEND_URL = https://mv-traders-iota.vercel.app
+   - PAYTM_CALLBACK_URL = https://mv-traders-0007.onrender.com/api/payment-callback
+
+✅ src/lib/paytm.ts
+   - Default BACKEND_URL = https://mv-traders-0007.onrender.com
+   - Respects VITE_BACKEND_URL environment variable
+
+✅ backend/routes/initiatePayment.js
+   - Callback URL fallback = https://mv-traders-0007.onrender.com/api/payment-callback
+
+============================================================================
+QUICK CHECKLIST
+============================================================================
+
+Before going live:
+
+✅ Backend deployed to Render
+✅ Frontend deployed to Vercel
+✅ CORS configured for all URLs
+✅ Paytm credentials in Render environment variables
+✅ Backend URL set in Vercel environment variables
+✅ Callback URL points to Render backend
+✅ Health endpoint working: /health
+✅ Payment endpoints working: /api/initiate-payment
+✅ Payment verified before deploying to production
+
+============================================================================
+SUPPORT URLS
+============================================================================
+
+Backend Health: https://mv-traders-0007.onrender.com/health
+Frontend URL: https://mv-traders-iota.vercel.app
+Repository: https://github.com/nexoventlabs-official/MV-Traders
+
+============================================================================
