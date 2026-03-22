@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: mv-traders-backend
+    env: node
+    plan: free
+    region: virginia
+    buildCommand: npm install
+    startCommand: npm start
+    rootDir: backend
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: PAYTM_MID
+        scope: project
+      - key: PAYTM_MERCHANT_KEY
+        scope: project
+      - key: PAYTM_WEBSITE
+        value: DEFAULT
+      - key: PAYTM_INDUSTRY_TYPE
+        value: Retail
+      - key: PAYTM_CHANNEL_ID
+        value: WEB
+      - key: PAYTM_PAYMENT_URL
+        value: https://securegw.paytm.in/order/process
+      - key: PAYTM_VERIFY_URL
+        value: https://securegw.paytm.in/merchant-status/getTxnStatus
+      - key: FRONTEND_URL
+        scope: project
+      - key: PAYTM_CALLBACK_URL
+        scope: project
