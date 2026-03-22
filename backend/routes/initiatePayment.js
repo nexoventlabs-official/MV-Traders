@@ -22,7 +22,7 @@ router.post('/initiate-payment', async (req, res) => {
     const WEBSITE = process.env.PAYTM_WEBSITE || 'DEFAULT';
     const CHANNEL_ID = process.env.PAYTM_CHANNEL_ID || 'WEB';
     const INDUSTRY_TYPE_ID = process.env.PAYTM_INDUSTRY_TYPE || 'Retail';
-    const CALLBACK_URL = process.env.PAYTM_CALLBACK_URL || 'http://localhost:5173/payment-callback';
+    const CALLBACK_URL = process.env.PAYTM_CALLBACK_URL || 'https://mv-traders-0007.onrender.com/api/payment-callback';
 
     // Validate Paytm credentials
     if (!MID || !MERCHANT_KEY) {

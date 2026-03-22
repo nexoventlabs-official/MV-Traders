@@ -24,7 +24,8 @@ export const paytmConfig: PaytmConfig = {
   channelId: import.meta.env.VITE_PAYTM_CHANNEL_ID || 'WEB',
 };
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:10000';
+// Backend URL - Use environment variable, defaults to Render production
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://mv-traders-0007.onrender.com';
 
 // Initiate payment by calling backend API
 export const initiatePaytmPayment = async (orderData: PaytmOrderData) => {

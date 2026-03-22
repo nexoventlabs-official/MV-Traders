@@ -20,10 +20,16 @@ const __dirname = dirname(__filename);
 
 // Middleware - CORS Configuration
 const allowedOrigins = [
+  // Development
   'http://localhost:5173',
   'http://localhost:8080',
   'http://127.0.0.1:5173',
   'http://127.0.0.1:8080',
+  // Production
+  'https://mv-traders-iota.vercel.app',
+  'https://www.mvtraders.shop',
+  'https://mvtraders.shop',
+  // Environment variable (Render)
   process.env.FRONTEND_URL || 'http://localhost:5173'
 ];
 
