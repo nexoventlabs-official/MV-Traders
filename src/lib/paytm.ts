@@ -122,10 +122,19 @@ export const openPaytmCheckout = async (
       },
     };
 
-    // Initialize and invoke Paytm checkout
+    // Initialize and invoke Paytm checkout using onLoad callback
+    // Per Paytm docs: init() is only available after SDK fully loads internally
     if ((window as any).Paytm && (window as any).Paytm.CheckoutJS) {
-      await (window as any).Paytm.CheckoutJS.init(config);
-      (window as any).Paytm.CheckoutJS.invoke();
+      (window as any).Paytm.CheckoutJS.onLoad(function () {
+        (window as any).Paytm.CheckoutJS.init(config)
+          .then(function () {
+            (window as any).Paytm.CheckoutJS.invoke();
+          })
+          .catch(function (error: any) {
+            console.error('Paytm CheckoutJS init error:', error);
+            onFailure(error?.message || 'Failed to initialize payment page');
+          });
+      });
     } else {
       throw new Error('Paytm CheckoutJS not loaded');
     }
