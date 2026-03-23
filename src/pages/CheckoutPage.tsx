@@ -12,11 +12,13 @@ import { initiatePaytmPayment, openPaytmCheckout } from '@/lib/paytm';
 
 const CheckoutPage = () => {
   const { items, total, clearCart, updateQuantity, removeItem } = useCart();
-  
-  const shippingCost = 50; // Flat shipping cost
+
+  // Check if cart contains only sample product (no shipping/tax)
+  const hasSampleProduct = items.some(item => item.product.id === 'sample-oil-1rupee');
+  const shippingCost = hasSampleProduct ? 0 : 50; // Waive shipping for sample product
   const taxRate = 0.05; // 5% tax
   const subtotal = items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-  const tax = subtotal * taxRate;
+  const tax = hasSampleProduct ? 0 : (subtotal * taxRate); // Waive tax for sample product
   const orderTotal = subtotal + shippingCost + tax;
   const { toast } = useToast();
   const [formData, setFormData] = useState({
