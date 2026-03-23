@@ -55,9 +55,40 @@ app.use(cors({
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({
+    status: 'MV Traders Backend API is running',
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    endpoints: [
+      'GET /health',
+      'POST /api/initiate-payment',
+      'POST /api/verify-transaction',
+      'POST /api/payment-callback',
+      'GET /api/payment-callback'
+    ],
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'Backend is running', timestamp: new Date().toISOString() });
+  const envStatus = {
+    NODE_ENV: process.env.NODE_ENV || 'not set',
+    PAYTM_MID_SET: !!process.env.PAYTM_MID,
+    PAYTM_KEY_SET: !!process.env.PAYTM_MERCHANT_KEY,
+    FRONTEND_URL: process.env.FRONTEND_URL || 'not set',
+    CALLBACK_URL: process.env.PAYTM_CALLBACK_URL || 'not set'
+  };
+
+  console.log('Health check - Environment:', envStatus);
+
+  res.json({
+    status: 'Backend is running',
+    timestamp: new Date().toISOString(),
+    environment: envStatus
+  });
 });
 
 // Preflight handler for OPTIONS requests
